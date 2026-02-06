@@ -21,8 +21,6 @@ export class HeaderComponent {
   notFound = false;
   isLoading = false;
 
-  private searchTimer: any;
-
   constructor(
     private router: Router,
     private userService: UserService,
@@ -32,7 +30,6 @@ export class HeaderComponent {
   }
 
   onSearch(value: string) {
-    clearTimeout(this.searchTimer);
     this.searchResult = null;
     this.notFound = false;
 
@@ -44,17 +41,16 @@ export class HeaderComponent {
 
     this.showDropdown = true;
 
-    this.searchTimer = setTimeout(() => {
-      this.userService.getUser(id).subscribe(user => {
-        if (user) {
-          this.searchResult = user;
-          this.notFound = false;
-        } else {
-          this.searchResult = null;
-          this.notFound = true;
-        }
-      });
-    }, 100);
+    // Instant search - no delay
+    this.userService.getUser(id).subscribe(user => {
+      if (user) {
+        this.searchResult = user;
+        this.notFound = false;
+      } else {
+        this.searchResult = null;
+        this.notFound = true;
+      }
+    });
   }
 
   selectUser(user: User) {

@@ -2,21 +2,19 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { UserService, User } from '../../services/user.service';
 
 @Component({
   selector: 'app-user-list',
   standalone: true,
-  imports: [CommonModule, MatPaginatorModule, MatProgressSpinnerModule],
+  imports: [CommonModule, MatPaginatorModule],
   templateUrl: './user-list.component.html',
   styleUrls: ['./user-list.component.scss']
 })
 export class UserListComponent implements OnInit {
   users: User[] = [];
-  totalUsers = 0;
+  totalUsers = 12;
   currentPage = 1;
-  loading = true;
 
   constructor(private router: Router, private userService: UserService) {}
 
@@ -25,16 +23,9 @@ export class UserListComponent implements OnInit {
   }
 
   loadUsers() {
-    this.loading = true;
-    this.userService.getUsers(this.currentPage).subscribe({
-      next: (res) => {
-        this.users = res.data;
-        this.totalUsers = res.total;
-        this.loading = false;
-      },
-      error: () => {
-        this.loading = false;
-      }
+    this.userService.getUsers(this.currentPage).subscribe(res => {
+      this.users = res.data;
+      this.totalUsers = res.total;
     });
   }
 

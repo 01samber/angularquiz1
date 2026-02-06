@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, tap, map, catchError, timeout } from 'rxjs';
+import { Observable, of, tap, map, catchError } from 'rxjs';
 
 export interface User {
   id: number;
@@ -23,39 +23,47 @@ export class UserService {
   private apiUrl = 'https://reqres.in/api/users';
   private cache = new Map<string, any>();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    // Pre-cache all mock data on startup
+    const mockData1 = this.getMockData(1);
+    const mockData2 = this.getMockData(2);
+    this.cache.set('users_1', mockData1);
+    this.cache.set('users_2', mockData2);
+    mockData1.data.forEach(u => this.cache.set('user_' + u.id, u));
+    mockData2.data.forEach(u => this.cache.set('user_' + u.id, u));
+  }
 
   getUsers(page: number): Observable<UsersResponse> {
     const key = 'users_' + page;
     
+    // Always return cached data immediately
     if (this.cache.has(key)) {
+      // Try to refresh from API in background
+      this.http.get<UsersResponse>(this.apiUrl + '?page=' + page).pipe(
+        tap(res => {
+          this.cache.set(key, res);
+          res.data.forEach(user => this.cache.set('user_' + user.id, user));
+        }),
+        catchError(() => of(null))
+      ).subscribe();
+      
       return of(this.cache.get(key));
     }
 
-    return this.http.get<UsersResponse>(this.apiUrl + '?page=' + page).pipe(
-      timeout(800),
-      tap(res => {
-        this.cache.set(key, res);
-        res.data.forEach(user => this.cache.set('user_' + user.id, user));
-      }),
-      catchError(() => {
-        const data = this.getMockData(page);
-        this.cache.set(key, data);
-        data.data.forEach(user => this.cache.set('user_' + user.id, user));
-        return of(data);
-      })
-    );
+    // Fallback if somehow cache is empty
+    return of(this.getMockData(page));
   }
 
   getUser(id: number): Observable<User | null> {
     const key = 'user_' + id;
     
+    // Always return cached data immediately
     if (this.cache.has(key)) {
       return of(this.cache.get(key));
     }
 
+    // For uncached users, try API then mock
     return this.http.get<{ data: User }>(this.apiUrl + '/' + id).pipe(
-      timeout(800),
       map(res => res.data),
       tap(user => this.cache.set(key, user)),
       catchError(() => {

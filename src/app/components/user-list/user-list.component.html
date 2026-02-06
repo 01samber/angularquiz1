@@ -1,9 +1,5 @@
 <main class="container">
-  <div class="spinner" *ngIf="loading">
-    <mat-spinner diameter="40"></mat-spinner>
-  </div>
-
-  <div class="grid" *ngIf="!loading">
+  <div class="grid">
     <div class="card" *ngFor="let user of users" (click)="viewUser(user.id)">
       <img [src]="user.avatar" [alt]="user.first_name">
       <h3>{{ user.first_name }} {{ user.last_name }}</h3>
@@ -12,7 +8,7 @@
   </div>
 
   <mat-paginator
-    *ngIf="!loading && totalUsers > 0"
+    *ngIf="totalUsers > 0"
     [length]="totalUsers"
     [pageSize]="6"
     [pageIndex]="currentPage - 1"
