@@ -54,7 +54,7 @@ export class HeaderComponent {
           this.notFound = true;
         }
       });
-    }, 200);
+    }, 100);
   }
 
   selectUser(user: User) {

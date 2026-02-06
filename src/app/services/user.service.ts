@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, tap, map, catchError } from 'rxjs';
+import { Observable, of, tap, map, catchError, timeout } from 'rxjs';
 
 export interface User {
   id: number;
@@ -28,13 +28,12 @@ export class UserService {
   getUsers(page: number): Observable<UsersResponse> {
     const key = 'users_' + page;
     
-    // Return from cache if available
     if (this.cache.has(key)) {
       return of(this.cache.get(key));
     }
 
-    // Try API first, fallback to mock data
     return this.http.get<UsersResponse>(this.apiUrl + '?page=' + page).pipe(
+      timeout(800),
       tap(res => {
         this.cache.set(key, res);
         res.data.forEach(user => this.cache.set('user_' + user.id, user));
@@ -42,6 +41,7 @@ export class UserService {
       catchError(() => {
         const data = this.getMockData(page);
         this.cache.set(key, data);
+        data.data.forEach(user => this.cache.set('user_' + user.id, user));
         return of(data);
       })
     );
@@ -50,13 +50,12 @@ export class UserService {
   getUser(id: number): Observable<User | null> {
     const key = 'user_' + id;
     
-    // Return from cache if available
     if (this.cache.has(key)) {
       return of(this.cache.get(key));
     }
 
-    // Try API first, fallback to mock data
     return this.http.get<{ data: User }>(this.apiUrl + '/' + id).pipe(
+      timeout(800),
       map(res => res.data),
       tap(user => this.cache.set(key, user)),
       catchError(() => {
