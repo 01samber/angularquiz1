@@ -27,46 +27,59 @@ export class UserService {
 
   getUsers(page: number): Observable<UsersResponse> {
     const key = 'users_' + page;
+    
+    // Return from cache if available
     if (this.cache.has(key)) {
       return of(this.cache.get(key));
     }
 
+    // Try API first, fallback to mock data
     return this.http.get<UsersResponse>(this.apiUrl + '?page=' + page).pipe(
       tap(res => {
         this.cache.set(key, res);
         res.data.forEach(user => this.cache.set('user_' + user.id, user));
       }),
-      catchError(() => of(this.getFallbackData(page)))
+      catchError(() => {
+        const data = this.getMockData(page);
+        this.cache.set(key, data);
+        return of(data);
+      })
     );
   }
 
   getUser(id: number): Observable<User | null> {
     const key = 'user_' + id;
+    
+    // Return from cache if available
     if (this.cache.has(key)) {
       return of(this.cache.get(key));
     }
 
+    // Try API first, fallback to mock data
     return this.http.get<{ data: User }>(this.apiUrl + '/' + id).pipe(
       map(res => res.data),
       tap(user => this.cache.set(key, user)),
-      catchError(() => of(this.getFallbackUser(id)))
+      catchError(() => {
+        const user = this.getMockUser(id);
+        if (user) this.cache.set(key, user);
+        return of(user);
+      })
     );
   }
 
-  private getFallbackData(page: number): UsersResponse {
-    const allUsers = this.getMockUsers();
-    const perPage = 6;
-    const start = (page - 1) * perPage;
+  private getMockData(page: number): UsersResponse {
+    const all = this.getMockUsers();
+    const start = (page - 1) * 6;
     return {
       page: page,
-      per_page: perPage,
-      total: allUsers.length,
+      per_page: 6,
+      total: all.length,
       total_pages: 2,
-      data: allUsers.slice(start, start + perPage)
+      data: all.slice(start, start + 6)
     };
   }
 
-  private getFallbackUser(id: number): User | null {
+  private getMockUser(id: number): User | null {
     return this.getMockUsers().find(u => u.id === id) || null;
   }
 
