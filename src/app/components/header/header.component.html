@@ -1,0 +1,35 @@
+<header>
+  <div class="header-inner">
+    <div class="brand" (click)="goHome()">
+      <mat-icon>people</mat-icon>
+      <span>Users Directory</span>
+    </div>
+
+    <div class="search-wrapper">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input
+        type="text"
+        placeholder="Search by ID..."
+        #searchInput
+        (input)="onSearch(searchInput.value)"
+        (blur)="hideDropdown()"
+      >
+
+      <div class="dropdown" *ngIf="showDropdown">
+        <div *ngIf="searchResult" class="dropdown-item" (mousedown)="selectUser(searchResult)">
+          <img [src]="searchResult.avatar" alt="">
+          <div class="info">
+            <span class="name">{{ searchResult.first_name }} {{ searchResult.last_name }}</span>
+            <span class="email">{{ searchResult.email }}</span>
+          </div>
+        </div>
+        <div *ngIf="notFound" class="dropdown-item not-found">
+          <mat-icon>person_off</mat-icon>
+          <span>User not found</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+</header>
